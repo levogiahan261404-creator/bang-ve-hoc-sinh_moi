@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bảng vẽ của em</title>
+<style>
+  :root{--blue:#2878e5;--ink:#24324a;--paper:#fff;--bg:#f1f7ff;--orange:#ff9f1c}
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink)}
+  header{background:linear-gradient(120deg,#2878e5,#7258e8);color:#fff;text-align:center;padding:18px 12px}
+  header h1{margin:0;font-size:clamp(1.4rem,4vw,2rem)} header p{margin:5px 0 0}
+  main{max-width:1000px;margin:18px auto;padding:0 12px 28px}
+  .panel{background:#fff;border-radius:18px;padding:16px;box-shadow:0 5px 20px #23446b12;margin-bottom:14px}
+  .identity{display:grid;grid-template-columns:2fr 1fr;gap:12px}
+  label{display:block;font-weight:700;margin-bottom:6px} input[type=text],input[type=number]{width:100%;padding:12px;border:2px solid #d8e4f4;border-radius:12px;font:inherit}
+  .tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+  .tools strong{margin-right:2px}.colors{display:flex;gap:7px;flex-wrap:wrap}
+  .color{width:34px;height:34px;border:3px solid white;box-shadow:0 0 0 1px #cbd5e1;border-radius:50%;cursor:pointer}
+  .color[aria-pressed=true]{box-shadow:0 0 0 3px #26364d}
+  input[type=range]{width:130px;accent-color:var(--blue)}
+  button{border:0;border-radius:12px;padding:11px 15px;font:inherit;font-weight:750;cursor:pointer;touch-action:manipulation}
+  button:focus-visible,input:focus-visible{outline:3px solid #ffbf47;outline-offset:2px}
+  .toolbtn{background:#eaf2ff;color:#1c5bb5}.toolbtn.active{background:#245fbb;color:#fff}
+  #canvasWrap{width:100%;background:#fff;border:3px dashed #bdd2ed;border-radius:14px;overflow:hidden}
+  canvas{display:block;width:100%;height:auto;aspect-ratio:4/3;touch-action:none;cursor:crosshair;background:#fff}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+  .submit{background:#ff9f1c;color:#392000;font-size:1.05rem;flex:1;min-width:220px;padding:14px}
+  .clear{background:#ffe9e9;color:#a42323}.status{margin:12px 0 0;min-height:1.4em;font-weight:650}
+  .hint{font-size:.92rem;color:#5e6e84;margin:8px 0 0}
+  @media(max-width:560px){.identity{grid-template-columns:1fr}.panel{padding:12px}.tools{gap:8px}.submit{min-width:100%}}
+</style>
+</head>
+<body>
+<header><h1>🎨 BẢNG VẼ CỦA EM</h1><p>Vẽ thật đẹp rồi gửi bài cho cô/thầy nhé!</p></header>
+<main>
+  <section class="panel identity">
+    <div><label for="studentName">Tên của em</label><input id="studentName" type="text" maxlength="60" placeholder="Ví dụ: Nguyễn Minh An" autocomplete="name"></div>
+    <div><label for="classNo">Lớp / Số thứ tự</label><input id="classNo" type="text" maxlength="30" placeholder="Ví dụ: 1A3 - 05"></div>
+  </section>
+  <section class="panel">
+    <div class="tools">
+      <strong>🖍️ Màu:</strong>
+      <div class="colors" id="colors" aria-label="Chọn màu bút">
+        <button class="color" style="background:#e53935" data-color="#e53935" aria-label="Đỏ" aria-pressed="true"></button>
+        <button class="color" style="background:#ff8f00" data-color="#ff8f00" aria-label="Cam" aria-pressed="false"></button>
+        <button class="color" style="background:#fdd835" data-color="#fdd835" aria-label="Vàng" aria-pressed="false"></button>
+        <button class="color" style="background:#43a047" data-color="#43a047" aria-label="Xanh lá" aria-pressed="false"></button>
+        <button class="color" style="background:#00acc1" data-color="#00acc1" aria-label="Xanh ngọc" aria-pressed="false"></button>
+        <button class="color" style="background:#1e88e5" data-color="#1e88e5" aria-label="Xanh dương" aria-pressed="false"></button>
+        <button class="color" style="background:#8e24aa" data-color="#8e24aa" aria-label="Tím" aria-pressed="false"></button>
+        <button class="color" style="background:#263238" data-color="#263238" aria-label="Đen" aria-pressed="false"></button>
+        <button class="color" style="background:#ff80ab" data-color="#ff80ab" aria-label="Hồng" aria-pressed="false"></button>
+      </div>
+    </div>
+    <div class="tools">
+      <strong for="brushSize">Độ to nét vẽ:</strong><input id="brushSize" type="range" min="2" max="28" value="7">
+      <span id="sizeLabel">7 px</span>
+      <button class="toolbtn active" id="penBtn" type="button">✏️ Bút vẽ</button>
+      <button class="toolbtn" id="eraserBtn" type="button">🧽 Tẩy</button>
+      <button class="toolbtn" id="fillBtn" type="button">🪣 Đổ màu</button>
+    </div>
+    <div id="canvasWrap"><canvas id="drawingCanvas" width="1000" height="750" aria-label="Bảng vẽ tương tác"></canvas></div>
+    <p class="hint">Mẹo: Em có thể dùng chuột hoặc ngón tay để vẽ. Chọn 🪣 Đổ màu rồi chạm vào vùng cần tô (tốt nhất là vùng có viền kín). Khi bấm “Nộp bài”, bài vẽ sẽ được gửi lên màn hình của giáo viên.</p>
+    <div class="actions">
+      <button class="clear" id="clearBtn" type="button">🗑️ Xóa, vẽ lại</button>
+      <button class="submit" id="submitBtn" type="button">📨 NỘP BÀI / GỬI CHO GIÁO VIÊN</button>
+    </div>
+    <p class="status" id="status" role="status" aria-live="polite"></p>
+  </section>
+</main>
+
+<!-- Firebase SDK dạng compat qua CDN, phù hợp trang HTML tĩnh. -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+/* ============================================================
+   1. THAY TOÀN BỘ giá trị mẫu bên dưới bằng firebaseConfig của bạn.
+   Lấy tại Firebase Console > Project settings > Your apps.
+   ============================================================ */
+const firebaseConfig = {
+  apiKey: "AIzaSyDxxXQBrFWYF1bxr4SjwxpwWpzXcIJb04rI",
+  authDomain: "lop-hoc-ve-tuong-tac.firebaseapp.com",
+  databaseURL: "https://lop-hoc-ve-tuong-tac-default-rtdb.firebaseio.com",
+  projectId: "lop-hoc-ve-tuong-tac",
+  storageBucket: "lop-hoc-ve-tuong-tac.firebasestorage.app",
+  messagingSenderId: "895650293633",
+  appId: "1:895650293633:web:f8a8c145d47a260d4aea80",
+  measurementId: "G-0Z4RF617BZ"
+};
+
+const statusEl = document.getElementById("status");
+let db = null;
+const configReady = firebaseConfig.apiKey !== "YOUR_API_KEY" &&
+                    firebaseConfig.projectId !== "YOUR_PROJECT_ID" &&
+                    (firebaseConfig.databaseURL.includes("firebaseio.com") || firebaseConfig.databaseURL.includes("firebasedatabase.app"));
+try {
+  if (configReady) {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.database();
+  } else {
+    statusEl.textContent = "⚙️ Cần điền firebaseConfig để gửi bài lên màn hình giáo viên.";
+  }
+} catch (error) {
+  statusEl.textContent = "Không khởi tạo được Firebase. Hãy kiểm tra lại cấu hình.";
+  console.error(error);
+}
+
+/* ============================================================
+   2. Khởi tạo Canvas: dùng tọa độ nội bộ cố định 1000 x 750.
+   CSS co giãn Canvas trên màn hình; hàm getPoint quy đổi đúng
+   tọa độ khi vẽ bằng chuột hoặc màn hình cảm ứng.
+   ============================================================ */
+const canvas = document.getElementById("drawingCanvas");
+const ctx = canvas.getContext("2d");
+ctx.fillStyle = "#ffffff";
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+ctx.lineCap = "round";
+ctx.lineJoin = "round";
+let currentColor = "#e53935";
+let brushSize = 7;
+let erasing = false;
+let fillMode = false;
+let drawing = false;
+let lastPoint = null;
+
+function getPoint(event) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: (event.clientX - rect.left) * canvas.width / rect.width,
+    y: (event.clientY - rect.top) * canvas.height / rect.height
+  };
+}
+function hexToRgb(hex) {
+  const value = hex.replace('#','');
+  return [parseInt(value.slice(0,2),16), parseInt(value.slice(2,4),16), parseInt(value.slice(4,6),16)];
+}
+/* Tô màu vùng liền kề bằng thuật toán flood-fill, phù hợp tranh viền kín. */
+function fillAt(point) {
+  const x0 = Math.max(0, Math.min(canvas.width-1, Math.floor(point.x)));
+  const y0 = Math.max(0, Math.min(canvas.height-1, Math.floor(point.y)));
+  const image = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = image.data, w = canvas.width, h = canvas.height;
+  const start = (y0*w+x0)*4;
+  const target = [data[start],data[start+1],data[start+2],data[start+3]];
+  const replacement = hexToRgb(currentColor);
+  if (target[0]===replacement[0] && target[1]===replacement[1] && target[2]===replacement[2] && target[3]===255) return;
+  const tolerance = 34;
+  const matches = (p) => Math.abs(data[p]-target[0])<=tolerance && Math.abs(data[p+1]-target[1])<=tolerance && Math.abs(data[p+2]-target[2])<=tolerance && Math.abs(data[p+3]-target[3])<=tolerance;
+  const stack = [y0*w+x0];
+  const seen = new Uint8Array(w*h);
+  while (stack.length) {
+    const pos = stack.pop();
+    if (pos<0 || pos>=w*h || seen[pos]) continue;
+    let y = Math.floor(pos/w), x = pos%w;
+    let idx = pos*4;
+    if (!matches(idx)) continue;
+    let left=x;
+    while(left>0 && !seen[y*w+left-1] && matches((y*w+left-1)*4)) left--;
+    let right=x;
+    while(right<w-1 && !seen[y*w+right+1] && matches((y*w+right+1)*4)) right++;
+    let spanUp=false, spanDown=false;
+    for(let xx=left;xx<=right;xx++) {
+      const p=y*w+xx, q=p*4; seen[p]=1;
+      data[q]=replacement[0]; data[q+1]=replacement[1]; data[q+2]=replacement[2]; data[q+3]=255;
+      if(y>0) { const up=p-w, ok=!seen[up]&&matches(up*4); if(ok&&!spanUp) stack.push(up); spanUp=ok; }
+      if(y<h-1) { const down=p+w, ok=!seen[down]&&matches(down*4); if(ok&&!spanDown) stack.push(down); spanDown=ok; }
+    }
+  }
+  ctx.putImageData(image,0,0);
+}
+function setTool(tool) {
+  fillMode = tool === 'fill';
+  erasing = tool === 'eraser';
+  document.getElementById('penBtn').classList.toggle('active', tool==='pen');
+  document.getElementById('eraserBtn').classList.toggle('active', tool==='eraser');
+  document.getElementById('fillBtn').classList.toggle('active', tool==='fill');
+  canvas.style.cursor = fillMode ? 'cell' : 'crosshair';
+}
+function startDraw(event) {
+  if (event.button !== undefined && event.button !== 0) return;
+  event.preventDefault();
+  const point = getPoint(event);
+  if (fillMode) { fillAt(point); statusEl.textContent = '🪣 Đã đổ màu vào vùng em chọn!'; return; }
+  drawing = true;
+  lastPoint = point;
+  try { canvas.setPointerCapture(event.pointerId); } catch (_) {}
+  ctx.beginPath();
+  ctx.arc(lastPoint.x, lastPoint.y, (erasing ? brushSize * 2 : brushSize) / 2, 0, Math.PI * 2);
+  ctx.fillStyle = erasing ? "#ffffff" : currentColor;
+  ctx.fill();
+}
+function draw(event) {
+  if (!drawing || !lastPoint) return;
+  event.preventDefault();
+  const point = getPoint(event);
+  ctx.beginPath();
+  ctx.moveTo(lastPoint.x, lastPoint.y);
+  ctx.lineTo(point.x, point.y);
+  ctx.strokeStyle = erasing ? "#ffffff" : currentColor;
+  ctx.lineWidth = erasing ? brushSize * 2 : brushSize;
+  ctx.stroke();
+  lastPoint = point;
+}
+function stopDraw() { drawing = false; lastPoint = null; }
+canvas.addEventListener("pointerdown", startDraw);
+canvas.addEventListener("pointermove", draw);
+canvas.addEventListener("pointerup", stopDraw);
+canvas.addEventListener("pointercancel", stopDraw);
+canvas.addEventListener("lostpointercapture", stopDraw);
+
+/* Chọn màu và độ dày nét bút. */
+document.querySelectorAll(".color").forEach(button => {
+  button.addEventListener("click", () => {
+    currentColor = button.dataset.color;
+    setTool("pen");
+    document.querySelectorAll(".color").forEach(b => b.setAttribute("aria-pressed", String(b === button)));
+  });
+});
+document.getElementById("brushSize").addEventListener("input", event => {
+  brushSize = Number(event.target.value);
+  document.getElementById("sizeLabel").textContent = brushSize + " px";
+});
+document.getElementById("penBtn").addEventListener("click", () => setTool("pen"));
+document.getElementById("eraserBtn").addEventListener("click", () => setTool("eraser"));
+document.getElementById("fillBtn").addEventListener("click", () => setTool("fill"));
+document.getElementById("clearBtn").addEventListener("click", () => {
+  if (!confirm("Em muốn xóa toàn bộ hình vẽ để vẽ lại nhé?")) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  statusEl.textContent = "Đã xóa bảng vẽ. Em có thể bắt đầu lại!";
+});
+
+/* ============================================================
+   3. Nộp bài: nén ảnh thành JPEG trước khi gửi để giảm dung lượng.
+   Dữ liệu được lưu trong Realtime Database cùng tên/lớp/thời gian.
+   ============================================================ */
+document.getElementById("submitBtn").addEventListener("click", async () => {
+  const name = document.getElementById("studentName").value.trim();
+  const classNo = document.getElementById("classNo").value.trim();
+  const submitBtn = document.getElementById("submitBtn");
+  if (!name || !classNo) {
+    statusEl.textContent = "✍️ Em hãy điền tên và lớp/số thứ tự trước khi nộp nhé.";
+    return;
+  }
+  if (!db) {
+    statusEl.textContent = "⚙️ Chưa kết nối Firebase. Giáo viên cần điền firebaseConfig trước.";
+    return;
+  }
+  submitBtn.disabled = true;
+  submitBtn.textContent = "⏳ Đang gửi bài...";
+  try {
+    // JPEG chất lượng 0.78 giữ ảnh rõ và giảm dung lượng Base64.
+    const imageData = canvas.toDataURL("image/jpeg", 0.78);
+    await db.ref("classroomSubmissions").push({
+      studentName: name,
+      classNo: classNo,
+      imageData: imageData,
+      submittedAt: firebase.database.ServerValue.TIMESTAMP
+    });
+    statusEl.textContent = "🎉 Nộp bài thành công! Giáo viên sẽ thấy bài vẽ của em.";
+  } catch (error) {
+    console.error(error);
+    statusEl.textContent = "❌ Chưa gửi được bài. Hãy kiểm tra kết nối mạng và cấu hình Firebase.";
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = "📨 NỘP BÀI / GỬI CHO GIÁO VIÊN";
+  }
+});
+</script>
+</body>
+</html>
